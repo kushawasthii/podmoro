@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Pomodoro Timer</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-clock"></i> Pomodoro Pro
+            </a>
+            <div class="settings-buttons">
+                <button id="darkMode" class="btn btn-outline-secondary" title="Toggle Dark Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="soundToggle" class="btn btn-outline-secondary" title="Toggle Sound">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <button id="notificationsToggle" class="btn btn-outline-secondary" title="Toggle Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button id="settingsBtn" class="btn btn-outline-secondary" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card main-card">
+                    <div class="card-body">
+                        <!-- Streak and Goals Section -->
+                        <div class="streak-section mb-4">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-fire"></i>
+                                        <h3 id="currentStreak">0</h3>
+                                        <p>Day Streak</p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-bullseye"></i>
+                                        <h3 id="dailyGoal">0/4</h3>
+                                        <p>Daily Goal</p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-link"></i>
+                                        <h3 id="chainCount">0</h3>
+                                        <p>Pomodoro Chain</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Session Info Section -->
+                        <div class="session-info mb-4">
+                            <div class="row text-center">
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-play-circle"></i>
+                                        <h3 id="sessionCount">0</h3>
+                                        <p>Total Sessions</p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-check-circle"></i>
+                                        <h3 id="completedCount">0</h3>
+                                        <p>Completed</p>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="stat-box">
+                                        <i class="fas fa-clock"></i>
+                                        <h3 id="totalTime">0</h3>
+                                        <p>Total Minutes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="timer-section text-center">
+                            <div class="timer-display">
+                                <span id="minutes">25</span>:<span id="seconds">00</span>
+                            </div>
+                            <div class="timer-label" id="timerLabel">Focus Time</div>
+                            
+                            <div class="timer-controls mt-4">
+                                <button id="start" class="btn btn-primary btn-lg" title="Start (Space)">
+                                    <i class="fas fa-play"></i> Start
+                                </button>
+                                <button id="pause" class="btn btn-warning btn-lg" title="Pause (Space)">
+                                    <i class="fas fa-pause"></i> Pause
+                                </button>
+                                <button id="reset" class="btn btn-danger btn-lg" title="Reset (R)">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                            </div>
+
+                            <div class="timer-modes mt-4">
+                                <button class="btn btn-outline-primary mode-btn active" data-time="25">
+                                    <i class="fas fa-brain"></i> Focus
+                                </button>
+                                <button class="btn btn-outline-primary mode-btn" data-time="5">
+                                    <i class="fas fa-coffee"></i> Short Break
+                                </button>
+                                <button class="btn btn-outline-primary mode-btn" data-time="15">
+                                    <i class="fas fa-couch"></i> Long Break
+                                </button>
+                                <button class="btn btn-outline-primary" id="customTimeBtn">
+                                    <i class="fas fa-clock"></i> Custom
+                                </button>
+                            </div>
+
+                            <div class="custom-time-input mt-3" style="display: none;">
+                                <div class="input-group justify-content-center">
+                                    <input type="number" id="customMinutes" class="form-control" style="width: 100px;" min="1" max="60" placeholder="Minutes">
+                                    <button class="btn btn-primary" id="setCustomTime">Set</button>
+                                </div>
+                            </div>
+
+                            <div class="progress mt-4">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="task-section mt-5">
+                            <div class="section-header">
+                                <h4><i class="fas fa-tasks"></i> Current Tasks</h4>
+                                <div class="task-actions">
+                                </div>
+                            </div>
+                            <div class="task-input-group mb-3">
+                                <div class="input-group">
+                                    <select class="form-select" id="taskCategory" style="max-width: 150px;">
+                                        <option value="default">Default</option>
+                                    </select>
+                                    <select class="form-select" id="taskPriority" style="max-width: 120px;">
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                    <input type="text" id="taskInput" class="form-control" placeholder="Enter your task">
+                                    <button class="btn btn-primary" id="addTask">
+                                        <i class="fas fa-plus"></i> Add Task
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="taskList" class="task-list">
+                                <!-- Tasks will be added here -->
+                            </div>
+                        </div>
+
+                        <!-- Completed Tasks Section -->
+                        <div class="completed-tasks-section mt-5">
+                            <div class="section-header">
+                                <h4><i class="fas fa-check-double"></i> Completed Tasks</h4>
+                            </div>
+                            <div id="completedTaskList" class="task-list">
+                                <!-- Completed tasks will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="session-history mt-5">
+                            <div class="section-header">
+                                <h4><i class="fas fa-history"></i> Session History</h4>
+                                <div class="history-actions">
+                                    <button class="btn btn-sm btn-outline-primary" id="exportData" title="Export Data">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" id="importData" title="Import Data">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary" id="clearHistory">
+                                        Clear History
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="historyList" class="history-list mb-4">
+                                <!-- History will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="analytics-section mt-5">
+                            <div class="section-header">
+                                <h4><i class="fas fa-chart-line"></i> Analytics</h4>
+                                <select class="form-select" id="analyticsPeriod" style="width: auto;">
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <canvas id="productivityChart"></canvas>
+                                </div>
+                                <div class="col-md-6">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Default Focus Duration (minutes)</label>
+                        <input type="number" class="form-control" id="defaultFocusTime" min="1" max="60" value="25">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Short Break Duration (minutes)</label>
+                        <input type="number" class="form-control" id="defaultShortBreak" min="1" max="30" value="5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Long Break Duration (minutes)</label>
+                        <input type="number" class="form-control" id="defaultLongBreak" min="1" max="60" value="15">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Daily Goal (pomodoros)</label>
+                        <input type="number" class="form-control" id="dailyGoalCount" min="1" max="20" value="4">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoStartBreaks">
+                            <label class="form-check-label">Auto-start breaks</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoStartPomodoros">
+                            <label class="form-check-label">Auto-start pomodoros</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enableNotifications">
+                            <label class="form-check-label">Enable notifications</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enableSound">
+                            <label class="form-check-label">Enable sound</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveSettings">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="categoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="categoryName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" id="categoryColor" value="#4a90e2">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveCategory">Save Category</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal fade" id="shortcutsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Keyboard Shortcuts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span class="key">Space</span>
+                            <span class="description">Start/Pause timer</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">R</span>
+                            <span class="description">Reset timer</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">1</span>
+                            <span class="description">Focus mode</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">2</span>
+                            <span class="description">Short break</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">3</span>
+                            <span class="description">Long break</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">C</span>
+                            <span class="description">Custom time</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="key">?</span>
+                            <span class="description">Show shortcuts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html> 
