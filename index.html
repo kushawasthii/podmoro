@@ -173,6 +173,8 @@
                         <div class="completed-tasks-section mt-5">
                             <div class="section-header">
                                 <h4><i class="fas fa-check-double"></i> Completed Tasks</h4>
+                                <div class="completed-task-actions">
+                                </div>
                             </div>
                             <div id="completedTaskList" class="task-list">
                                 <!-- Completed tasks will be added here -->
@@ -196,6 +198,71 @@
                             </div>
                             <div id="historyList" class="history-list mb-4">
                                 <!-- History will be added here -->
+                            </div>
+                        </div>
+
+                        <!-- Detailed Statistics Section -->
+                        <div class="detailed-stats-section mt-5">
+                            <div class="section-header">
+                                <h4><i class="fas fa-chart-bar"></i> Detailed Statistics</h4>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-hourglass-half"></i>
+                                        <h3 id="avgFocusDuration">0 min</h3>
+                                        <p>Avg Focus</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-mug-hot"></i>
+                                        <h3 id="avgShortBreakDuration">0 min</h3>
+                                        <p>Avg Short Break</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-bed"></i>
+                                        <h3 id="avgLongBreakDuration">0 min</h3>
+                                        <p>Avg Long Break</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-brain"></i>
+                                        <h3 id="totalFocusSessions">0</h3>
+                                        <p>Focus Sessions</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-coffee"></i>
+                                        <h3 id="totalShortBreakSessions">0</h3>
+                                        <p>Short Breaks</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-couch"></i>
+                                        <h3 id="totalLongBreakSessions">0</h3>
+                                        <p>Long Breaks</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-trophy"></i>
+                                        <h3 id="longestDailyStreak">0 days</h3>
+                                        <p>Longest Daily Streak</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="stat-box">
+                                        <i class="fas fa-tasks"></i>
+                                        <h3 id="taskCompletionRate">0%</h3>
+                                        <p>Task Completion Rate</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
