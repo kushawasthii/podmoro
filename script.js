@@ -22,6 +22,7 @@ $(document).ready(function() {
     let chainCount = 0; // Default, will be loaded from DB
     let dailyGoal = 4; // Default, will be loaded from DB
     let dailyProgress = 0; // Default, will be loaded from DB
+    let longestDailyStreak = 0; // Default, will be loaded from DB
     let settings = {
         focusTime: 25,
         shortBreak: 5,
@@ -187,6 +188,7 @@ $(document).ready(function() {
                         case 'chainCount': chainCount = item.value !== undefined ? item.value : 0; break; // Provide default if undefined
                         case 'dailyGoal': dailyGoal = item.value !== undefined ? item.value : 4; break; // Provide default if undefined
                         case 'dailyProgress': dailyProgress = item.value !== undefined ? item.value : 0; break; // Provide default if undefined
+                        case 'longestDailyStreak': longestDailyStreak = item.value !== undefined ? item.value : 0; break; // Provide default if undefined
                     }
                 });
             }
@@ -253,6 +255,7 @@ $(document).ready(function() {
             await addObject('stats', { key: 'chainCount', value: chainCount });
             await addObject('stats', { key: 'dailyGoal', value: dailyGoal });
              await addObject('stats', { key: 'dailyProgress', value: dailyProgress });
+             await addObject('stats', { key: 'longestDailyStreak', value: longestDailyStreak });
 
              console.log('Stats saved to IndexedDB');
         } catch (error) {
@@ -327,14 +330,26 @@ $(document).ready(function() {
         const today = new Date().toDateString();
         const yesterday = new Date(Date.now() - 86400000).toDateString();
 
+        let streakUpdated = false;
+
         if (lastCompletedDate === yesterday) {
             currentStreak++;
+            streakUpdated = true;
         } else if (lastCompletedDate !== today) {
             currentStreak = 1;
+            streakUpdated = true;
         }
 
         lastCompletedDate = today;
-        await saveStats(); // Save updated streak and last completed date
+
+        if (currentStreak > longestDailyStreak) {
+            longestDailyStreak = currentStreak;
+            streakUpdated = true;
+        }
+
+        if (streakUpdated) {
+            await saveStats(); // Save updated streak, longest streak, and last completed date
+        }
 
         $('#currentStreak').text(currentStreak).addClass('updated');
         setTimeout(() => $('#currentStreak').removeClass('updated'), 1000);
@@ -565,12 +580,17 @@ $(document).ready(function() {
         const mode = $('.mode-btn.active').text();
         const taskText = currentTask || 'No task';
 
+        // Determine the actual duration of the session that just completed
+        // This is totalTime / 60 if a full session completed, or the duration difference if manually ended/reset
+        // For simplicity and consistency with previous logic, we'll use totalTime / 60 for completed sessions
+        const sessionDuration = totalTime / 60;
+
         const newHistoryEntry = {
             date: dateString,
             time: timeString,
             mode: mode,
             task: taskText,
-            duration: totalTime / 60
+            duration: sessionDuration
         };
 
         await addObject('sessionHistory', newHistoryEntry); // Add history to IndexedDB
@@ -590,8 +610,8 @@ $(document).ready(function() {
         const $historyList = $('#historyList');
         $historyList.empty();
 
-        // Display only the most recent 5 sessions from the local array
-        sessionHistory.slice(0, 5).forEach(session => {
+        // Display all sessions in the local array (capped at 50 during load)
+        sessionHistory.forEach(session => {
             const $historyItem = $(`
                 <div class="history-item">
                     <div class="d-flex justify-content-between">
@@ -603,6 +623,10 @@ $(document).ready(function() {
             `);
             $historyList.append($historyItem);
         });
+        // Add a message if history is empty
+        if (sessionHistory.length === 0) {
+            $historyList.append('<div class="history-item text-center">No sessions recorded yet.</div>');
+        }
     }
 
     // Update analytics charts
@@ -745,6 +769,7 @@ $(document).ready(function() {
 
          // Calculate completed tasks per category - ensure tasks is an array
         const completedTasks = tasks.filter(task => task && task.completed); // Check if task is not null/undefined
+        const totalTasks = tasks.length; // Get total number of tasks
         const categoryCounts = categories.map(category => {
             if (!category || !category.name) return 0; // Skip if category or name is missing
             return completedTasks.filter(task => task.category === category.name).length;
@@ -777,6 +802,60 @@ $(document).ready(function() {
         } else {
             console.error('Category chart canvas element not found.');
         }
+
+        // Update detailed statistics
+        updateDetailedStats(allHistory, tasks);
+    }
+
+    // Update detailed statistics display
+    async function updateDetailedStats(allHistory, allTasks) {
+        // Ensure allHistory and allTasks are arrays
+        allHistory = allHistory || [];
+        allTasks = allTasks || [];
+
+        // Calculate average session durations and total counts
+        let totalFocusDuration = 0;
+        let totalShortBreakDuration = 0;
+        let totalLongBreakDuration = 0;
+        let focusSessionCount = 0;
+        let shortBreakSessionCount = 0;
+        let longBreakSessionCount = 0;
+
+        allHistory.forEach(session => {
+            if (session && session.mode && session.duration !== undefined) { // Check if session, mode, and duration exist
+                if (session.mode.includes('Focus')) {
+                    totalFocusDuration += session.duration;
+                    focusSessionCount++;
+                } else if (session.mode.includes('Short Break')) {
+                    totalShortBreakDuration += session.duration;
+                    shortBreakSessionCount++;
+                } else if (session.mode.includes('Long Break')) {
+                    totalLongBreakDuration += session.duration;
+                    longBreakSessionCount++;
+                }
+            }
+        });
+
+        const avgFocusDuration = focusSessionCount > 0 ? totalFocusDuration / focusSessionCount : 0;
+        const avgShortBreakDuration = shortBreakSessionCount > 0 ? totalShortBreakDuration / shortBreakSessionCount : 0;
+        const avgLongBreakDuration = longBreakSessionCount > 0 ? totalLongBreakDuration / longBreakSessionCount : 0;
+
+        $('#avgFocusDuration').text(`${Math.floor(avgFocusDuration)} min`);
+        $('#avgShortBreakDuration').text(`${Math.floor(avgShortBreakDuration)} min`);
+        $('#avgLongBreakDuration').text(`${Math.floor(avgLongBreakDuration)} min`);
+        $('#totalFocusSessions').text(focusSessionCount);
+        $('#totalShortBreakSessions').text(shortBreakSessionCount);
+        $('#totalLongBreakSessions').text(longBreakSessionCount);
+
+        // Display longest daily streak
+        $('#longestDailyStreak').text(`${longestDailyStreak} days`);
+
+        // Calculate task completion rate
+        const completedTasksCount = allTasks.filter(task => task && task.completed).length; // Check if task exists
+        const totalTasksCount = allTasks.length;
+        const taskCompletionRate = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
+
+        $('#taskCompletionRate').text(`${Math.floor(taskCompletionRate)}%`);
     }
 
     // Export data
@@ -903,42 +982,6 @@ $(document).ready(function() {
         sessionHistory = []; // Clear local array
         updateHistoryList();
         updateAnalytics();
-    }
-
-    // Save settings
-    async function saveSettings() {
-        settings = {
-            focusTime: parseInt($('#defaultFocusTime').val()) || 25, // Provide default
-            shortBreak: parseInt($('#defaultShortBreak').val()) || 5, // Provide default
-            longBreak: parseInt($('#defaultLongBreak').val()) || 15, // Provide default
-            autoStartBreaks: $('#autoStartBreaks').is(':checked'),
-            autoStartPomodoros: $('#autoStartPomodoros').is(':checked'),
-            enableNotifications: $('#enableNotifications').is(':checked'),
-            enableSound: $('#enableSound').is(':checked'),
-             darkMode: $('body').hasClass('dark-mode') // Save dark mode state
-        };
-        await clearStore('settings'); // Clear existing settings
-        for (const key in settings) {
-             // Check if key and value are valid before saving
-             if (settings.hasOwnProperty(key) && settings[key] !== undefined) {
-                 await addObject('settings', { key: key, value: settings[key] }); // Save updated settings
-             }
-        }
-
-        // Update daily goal and save stats
-        dailyGoal = parseInt($('#dailyGoalCount').val()) || 4; // Provide default
-         await saveStats();
-
-        // Update notifications and sound settings
-        notificationsEnabled = settings.enableNotifications;
-        soundEnabled = settings.enableSound;
-
-        // Update mode buttons with new times
-        $('.mode-btn[data-time="25"]').data('time', settings.focusTime);
-        $('.mode-btn[data-time="5"]').data('time', settings.shortBreak);
-        $('.mode-btn[data-time="15"]').data('time', settings.longBreak);
-
-        resetTimer();
     }
 
     // Load settings into modal
@@ -1084,7 +1127,7 @@ $(document).ready(function() {
         if (!('indexedDB' in window)) {
             console.error('IndexedDB not supported');
             // Display a message to the user indicating lack of support
-            $('body').html('<div class="container mt-5 text-center"><h3>Your browser does not support IndexedDB. Please use a modern browser.</h3></div>');
+             $('body').html('<div class="container mt-5 text-center"><h3>Your browser does not support IndexedDB. Please use a modern browser.</h3></div>');
             return;
         }
 
@@ -1092,7 +1135,11 @@ $(document).ready(function() {
             await openDB();
             await loadData();
             initTimer(settings.focusTime !== undefined ? settings.focusTime : 25); // Use loaded focus time, provide default
-             resetDailyProgress(); // Schedule daily progress reset
+             // Call updateDetailedStats after loading data to display initial stats
+             const allHistory = await getAllObjects('sessionHistory') || [];
+             const allTasks = await getAllObjects('tasks') || [];
+             updateDetailedStats(allHistory, allTasks);
+              resetDailyProgress(); // Schedule daily progress reset
 
              // Set initial dark mode state based on settings
              if (settings.darkMode) {
